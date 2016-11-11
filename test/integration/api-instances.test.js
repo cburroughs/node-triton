@@ -31,17 +31,20 @@ var INST;
 test('TritonApi packages', function (tt) {
     tt.test(' setup', function (t) {
         CLIENT = h.createClient();
-        t.ok(CLIENT, 'client');
 
-        CLIENT.cloudapi.listMachines(function (err, insts) {
-            if (h.ifErr(t, err))
-                return t.end();
+        CLIENT.init(function (initErr) {
+            t.error(initErr);
 
-            t.ok(Array.isArray(insts), 'instances');
+            CLIENT.cloudapi.listMachines(function (err, insts) {
+                if (h.ifErr(t, err))
+                    return t.end();
 
-            INST = insts[0];
+                t.ok(Array.isArray(insts), 'instances');
 
-            t.end();
+                INST = insts[0];
+
+                t.end();
+            });
         });
     });
 

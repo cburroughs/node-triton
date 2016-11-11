@@ -31,21 +31,23 @@ var NET;
 test('TritonApi networks', function (tt) {
     tt.test(' setup', function (t) {
         CLIENT = h.createClient();
-        t.ok(CLIENT, 'client');
 
-        var opts = {
-            account: CLIENT.profile.account
-        };
+        CLIENT.init(function (initErr) {
+            t.error(initErr);
+            var opts = {
+                account: CLIENT.profile.account
+            };
 
-        CLIENT.cloudapi.listNetworks(opts, function (err, nets) {
-            if (h.ifErr(t, err))
-                return t.end();
+            CLIENT.cloudapi.listNetworks(opts, function (err, nets) {
+                if (h.ifErr(t, err))
+                    return t.end();
 
-            t.ok(Array.isArray(nets), 'networks');
+                t.ok(Array.isArray(nets), 'networks');
 
-            NET = nets[0];
+                NET = nets[0];
 
-            t.end();
+                t.end();
+            });
         });
     });
 

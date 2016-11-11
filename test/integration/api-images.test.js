@@ -30,8 +30,10 @@ test('TritonApi images', function (tt) {
     var client;
     tt.test(' setup: client', function (t) {
         client = h.createClient();
-        t.ok(client, 'client');
-        t.end();
+        client.init(function (err) {
+            t.error(err);
+            t.end();
+        });
     });
 
     var testOpts = {};
