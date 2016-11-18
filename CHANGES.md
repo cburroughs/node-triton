@@ -7,6 +7,61 @@ Known issues:
 
 ## not yet released
 
+- **BREAKING CHANGE for module usage of node-triton.**
+  To implement joyent/node-triton#108, the way a TritonApi client is
+  setup for use has changed from being sync to async. Therefore what
+  used to be:
+
+        var triton = require('triton');
+        var client = triton.createClient({      # No longer works.
+            profile: {
+                url: "<cloudapi url>",
+                account: "<account login for this cloud>",
+                keyId: "<ssh key fingerprint for one of account's keys>"
+            }
+        });
+
+  is now:
+
+        var triton = require('triton');
+        triton.createClient({
+            profile: {
+                url: "<cloudapi url>",
+                account: "<account login for this cloud>",
+                keyId: "<ssh key fingerprint for one of account's keys>"
+            }
+        }, function (initErr, client) {
+            if (initErr) boom(initErr);
+
+            triton.promptPassphraseUnlockKey({
+                tritonapi: client
+            }, function (unlockErr) {
+                if (unlockErr) boom(unlockErr);
+
+                // Use `client`...
+            });
+        });
+
+  First, the initialization done by `createClient` is async as it always should
+  have been, to find a matching SSH key for the given `keyId`. Second, in the
+  case where an encrypted SSH private key is specified (which isn't in an
+  ssh-agent), one needs to manually unlock it with its passphrase. The
+  new `triton.promptPassphraseUnlockKey` is a convenience function for this.
+  See full `TritonApi` setup details in the top comment in
+  [lib/tritonapi.js](lib/tritonapi.js).
+
+- joyent/node-triton#108 Support for passphrase-protected private keys.
+  Before this work, an encrypted private SSH key (i.e. protected by a
+  passphrase) would have to be loaded in an ssh-agent for the `triton`
+  CLI to use it. Now `triton` will prompt for the passphrase to unlock
+  the private key (in memory), if needed. For example:
+
+        $ triton package list
+        Enter passphrase for id_rsa:
+        SHORTID   NAME             MEMORY  SWAP  DISK  VCPUS
+        14ad9d54  g4-highcpu-128M    128M  512M    3G      -
+        14ae2634  g4-highcpu-256M    256M    1G    5G      -
+        ...
 - [joyent/node-triton#143] Fix duplicate output from 'triton rbac key ...'.
 
 ## 4.15.0
