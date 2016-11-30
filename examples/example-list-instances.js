@@ -27,20 +27,37 @@ var log = bunyan.createLogger({
  * For example, if you want to use an existing `triton` CLI profile, you can
  * pass that profile name in.
  */
-var client = triton.createClient({
+var tritonapi = triton.createClient({
     log: log,
     profile: {
         url: URL,
         account: ACCOUNT,
         keyId: KEY_ID
+    }}
+);
+tritonapi.init(function (initErr) {
+    if (initErr) {
+        log.fatal(initErr);
+        return;
     }
-});
-// TODO: Eventually the top-level TritonApi will have `.listInstances()` to use.
-client.cloudapi.listMachines(function (err, insts) {
-    client.close();   // Remember to close the client to close TCP conn.
-    if (err) {
-        console.error('listInstances err:', err);
-    } else {
-        console.log(JSON.stringify(insts, null, 4));
-    }
+
+    triton.promptPassphraseUnlockKey({
+        tritonapi: tritonapi
+    }, function (unlockErr) {
+        if (unlockErr) {
+            log.fatal(unlockErr);
+            return;
+        }
+        // TODO: Eventually the top-level TritonApi will have
+        // `.listInstances()` to use.
+        tritonapi.cloudapi.listMachines(function (err, insts) {
+            // Remember to close the client to close TCP conn.
+            tritonapi.close();
+            if (err) {
+                console.error('listInstances err:', err);
+            } else {
+                console.log(JSON.stringify(insts, null, 4));
+            }
+        });
+    });
 });
