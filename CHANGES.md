@@ -50,7 +50,7 @@ Known issues:
   See full `TritonApi` setup details in the top comment in
   [lib/tritonapi.js](lib/tritonapi.js).
 
-- joyent/node-triton#108 Support for passphrase-protected private keys.
+- [joyent/node-triton#108] Support for passphrase-protected private keys.
   Before this work, an encrypted private SSH key (i.e. protected by a
   passphrase) would have to be loaded in an ssh-agent for the `triton`
   CLI to use it. Now `triton` will prompt for the passphrase to unlock
