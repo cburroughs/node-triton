@@ -9,8 +9,10 @@ Known issues:
 
 - **BREAKING CHANGE for module usage of node-triton.**
   To implement joyent/node-triton#108, the way a TritonApi client is
-  setup for use has changed from being sync to async. Therefore what
-  used to be:
+  setup for use has changed from being sync to async.  There is now a
+  multi-step process: create the client object; initialize it; and
+  (optionally) attempt to promt for passphrases for encrypted
+  keys. Therefore what used to be:
 
         var triton = require('triton');
         var client = triton.createClient({      # No longer works.
@@ -23,23 +25,39 @@ Known issues:
 
   is now:
 
-        var triton = require('triton');
-        triton.createClient({
+        try {
+            var client = mod_triton.createClient({
+                log: log,
+                profileName: 'env'
+            });
+        } catch (e) {
+            boom(e);
+        }
+        client.init(function (initErr) {
+            if (initErr) {
+                boom(initErr);
+            }
+            mod_triton.promptPassphraseUnlockKey({
+                tritonapi: client
+            }, function (unlockErr) {
+                if (unlockErr) {
+                    boom(unlockErr);
+                }
+                // use `client`...
+            });
+        });
+
+  or (with convenience wrappers):
+
+        triton.createClientAndInit({
             profile: {
                 url: "<cloudapi url>",
                 account: "<account login for this cloud>",
                 keyId: "<ssh key fingerprint for one of account's keys>"
             }
-        }, function (initErr, client) {
+        }, function (err, client) {
             if (initErr) boom(initErr);
-
-            triton.promptPassphraseUnlockKey({
-                tritonapi: client
-            }, function (unlockErr) {
-                if (unlockErr) boom(unlockErr);
-
-                // Use `client`...
-            });
+            // Use `client`...
         });
 
   First, the initialization done by `createClient` is async as it always should
